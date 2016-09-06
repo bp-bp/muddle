@@ -1,0 +1,165 @@
+html {
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+	background-color: #b1b1b1;
+}
+
+/* wat */
+*, *:after, *:before {
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+button {
+	background-color: #4e4e4e;
+	color: #cacaca;
+	border: none;
+	padding: 0.1em 0.3em;
+}
+
+h2 {
+	margin: 1em 1em;
+}
+
+h3 {
+	margin: .25em 0;
+}
+
+h4 {
+	margin: .7em 0 .25em 0;
+}
+
+h5 {
+	margin: .5em 0 .2em 0;
+}
+
+.feature_cell {
+	display: table-cell;
+}
+
+.feature_table {
+	display: table;
+}
+
+.feature_row {
+	display: table-row;
+}
+
+.tag {
+	border: 2px solid red;
+}
+
+.wrapper {
+	width: 80%;
+	margin: 0 auto;
+	white-space: nowrap;
+	display: table;
+}
+
+.header {
+	height: 5em;
+	width: 100%;
+	background-color: #34495e;
+	font-size: 130%;
+	padding: 1em 1em;
+	display: table-row;
+	color: #ecf0f1;
+}
+
+.left_column {
+	background-color: #1abc9c;
+	display: table-cell;
+	width: 15em;
+	height: 30em;
+}
+
+.left_column > * {
+	margin: 0 1em;
+}
+
+.main_container {
+	background-color: #ecf0f1;
+	display: table-cell;
+	width: 100%;
+	height: 30em;
+	min-width: 20em;
+}
+
+.main_container > * {
+	margin: 0 1em;
+}
+
+.type_container {
+	margin-top: 1.75em;
+}
+
+.left_panel {
+	padding: .5em 0em 1em 1em;
+}
+
+.left_panel select {
+	margin-bottom: .5em;
+}
+
+.left_panel_doc {
+	font-weight: bold;
+	font-size: 80%;
+	width: 20em;
+	white-space: normal;
+	margin-bottom: .5em;
+}
+
+.master_edit {
+	margin: .75em 0em;
+}
+
+.left_panel > h3 {
+	margin-left: -1em;
+}
+
+.main_panel {
+	margin: 0 1em;
+}
+
+.button_column {
+	min-width: 5em;
+	width: 40%;
+}
+
+.button_column > button {
+	display: block;
+	width: 100%;
+	margin: .5em 1em;
+}
+
+.picker_container {
+	margin-top: 3em;
+}
+
+.ent_picker {
+	margin-top: .5em;
+	padding: 0;
+	cursor: default;
+	border: 1px solid gray;
+}
+
+.ent_picker_item {
+	list-style-type: none;
+	background-color: #a7a7a7;
+	min-height: 1.25em;
+}
+
+.selected {
+	font-weight: bold;
+}
+
+label {
+	background-color: #4e4e4e;
+	color: #cacaca;
+	border: none;
+	padding: 0.2em 0.3em;
+	font-size: 80%;
+}
