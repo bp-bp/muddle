@@ -131,7 +131,54 @@ def load_all_masters():
 	masters = fetcher.get_all_masters()
 	return json.dumps(masters)
 
-
+# note this is a route and not a post/get...
+@route("/export_master/")
+def export_master():
+	
+	if "master_id" in request.query.keys():
+		master_id = request.query["master_id"]
+		if master_id == "null":
+			master_id = None
+	else:
+		master_id = None
+	
+	the_data = fetcher.get_ents(master_id)
+	
+	# path stuff
+	name = None
+	if not master_id:
+		name = "default"
+	else:
+		name = master_id
+	
+	export_path = "exports/" + name
+	
+	# delete exports directory if it already exists
+	if os.path.exists(export_path):
+		os.rename(export_path,"exports/to_del")
+		shutil.rmtree("exports/to_del")
+		
+	# same deal with the export zip
+	if os.path.exists(export_path + ".zip") and os.path.isfile(export_path + ".zip"):
+		os.rename(export_path + ".zip", "exports/to_del.zip")
+		os.unlink("exports/to_del.zip")
+	
+	# create empty export dir
+	os.makedirs(export_path)
+	
+	# write out the json
+	export_file = open(export_path + "/data.json", "w")
+	export_file.write(json.dumps(the_data))
+	export_file.close()
+	
+	# grab our assets
+	# put something here
+	
+	# zip it all up
+	shutil.make_archive(export_path, "zip", export_path)
+	
+	return static_file(export_path + ".zip", root = "", download = export_path + ".zip")
+	
 
 class Fetcher:
 	def __init__(self):
