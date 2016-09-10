@@ -1480,7 +1480,7 @@ angular.module("muddle").directive("assetFilepicker", function() {
 
 
 // simple for interacting with backend
-angular.module("muddle").service("muddle_backend", ["data_muddle", "$http", function(data_muddle, $http) {
+angular.module("muddle").service("muddle_backend", ["data_muddle", "$http", "$window", function(data_muddle, $http, $window) {
 	this.data_muddle = data_muddle;
 	
 	// save master-level entity
@@ -1539,7 +1539,7 @@ angular.module("muddle").service("muddle_backend", ["data_muddle", "$http", func
 			function(payload) {
 				// hoo boy this next bit is ugly, but it works. Puts a "default" option at the beginning of the masters list
 				// drawback is the null_master will always be first with edit_sort of 1... if you try to use edit_sort in the masters list, 
-				// you'll run into problems. An alternative would be to check if there's a default null master after loading, then if not
+				// you'll run into problems. An better solution would be to check if there's a default null master after loading, then if not
 				// construct one as an actual master-level entity, then save it.
 				var null_master = {id: null, get_child: function() {return {val: function() {return "Default";}}}};
 				that.data_muddle.masters.push(null_master);
@@ -1672,6 +1672,23 @@ angular.module("muddle").service("muddle_backend", ["data_muddle", "$http", func
 			}
 		);
 	};
+	
+	// export this company's data as a zip containing a json file and, eventually, any uploaded files
+	// to do: implement the uploaded files part
+	this.export_master = function(master) {
+		var params = {master_id: false};
+		if (angular.isDefined(master)) {
+			params.master_id = master.id;
+		}
+		
+		// ought to be a better way to do this
+		var a = angular.element("<a/>");
+		a.attr({ 	href: "/export_master/?master_id=" + params.master_id
+					, type: "application/force-download"
+					}
+				)[0].click();
+	};
+	
 
 }]);
 
