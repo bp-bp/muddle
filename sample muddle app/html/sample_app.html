@@ -1,7 +1,7 @@
 <html>
 <head>
 	<link rel = "stylesheet" type = "text/css" href = "../css/sample_app.css">
-	<script type = "text/javascript" src = "../js/angular.js"></script>
+	<script type = "text/javascript" src = "https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
 	<script type = "text/javascript" src = "../js/muddle.js"></script>
 	<script type = "text/javascript" src = "../js/sample_app.js"></script>
 	<title>Sample Muddle App</title>
@@ -34,6 +34,7 @@
 					<div>
 						<button title = "Create a new, blank company." ng-click = "ctrl_new_blank_master()">New Company</button>
 						<button title = "Save the current company." ng-click = "backend.save(current_master())">Save Company</button>
+						<button title = "Download a zip file containing the current company's raw data" ng-click = "backend.export_master(current_master())">Export Company</button>
 						<div class = "master_edit" mud-master = "master" ng-repeat = "master in dm.masters | filter:{id: current_master().id}">
 							<mud-prop mud-prop-type = "val" mud-prop-name = "name">
 								Company name: <input mud-bind/>
