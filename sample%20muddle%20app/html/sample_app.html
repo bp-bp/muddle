@@ -1,0 +1,204 @@
+<html>
+<head>
+	<link rel = "stylesheet" type = "text/css" href = "../css/sample_app.css">
+	<script type = "text/javascript" src = "https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+	<script type = "text/javascript" src = "../js/muddle.js"></script>
+	<script type = "text/javascript" src = "../js/sample_app.js"></script>
+	<title>Sample Muddle App</title>
+</head>
+
+<body ng-app = "mud_app">
+<div ng-controller = "main_control">
+	
+	<div class = "wrapper">
+		<div class = "header">
+			<h2>Sample App</h2>
+		</div>
+		
+		<!-- menu stuff -->
+		<div>
+			<div class = "left_column">
+				<div class = "left_panel">
+					<h3>Company</h3>
+					<div class = "left_panel_doc">
+						Choose which company to edit. Selecting or creating a new company will reload all data.
+					</div>
+					<div>
+						<!--<div class = "left_panel_doc">Choose company...</div>-->
+						<select ng-model = "current_master" 
+								ng-model-options = "{getterSetter: true}"
+								ng-options = "master.get_child('name').val() for master in dm.masters"
+								ng-change = "ctrl_change_master(current_master(), {{current_master()}})">
+						</select>
+					</div>
+					<div>
+						<button title = "Create a new, blank company." ng-click = "ctrl_new_blank_master()">New Company</button>
+						<button title = "Save the current company." ng-click = "backend.save(current_master())">Save Company</button>
+						<button title = "Download a zip file containing the current company's raw data" ng-click = "backend.export_master(current_master())">Export Company</button>
+						<div class = "master_edit" mud-master = "master" ng-repeat = "master in dm.masters | filter:{id: current_master().id}">
+							<mud-prop mud-prop-type = "val" mud-prop-name = "name">
+								Company name: <input mud-bind/>
+							</mud-prop>
+						</div>
+						
+					</div>
+				</div>
+				
+				<!-- uncomment for a row of buttons to test and explore the data model -->
+				<!--<div>
+					<h5>Testing...</h5>
+					<button ng-click = "echo_data()">echo data</button>
+					<button ng-click = "echo_ents()">echo ents</button>
+					<button ng-click = "echo_modified()">echo modified</button>
+					<button ng-click = "echo_types()">echo types</button>
+					<button ng-click = "echo_current()">echo current</button>
+				</div>-->
+				
+				<div class = "left_panel">
+					<h3>Save All</h3>
+					<div class = "left_panel_doc">Saves all entities in the current company.</div>
+					<button ng-click = "backend.save(dm.modified_ents(), current_master())">Save</button>
+				</div>
+				
+				<div class = "left_panel">
+					<h3>Choose an entity type to edit:</h3>
+					<div class = "left_panel_doc">
+						Create and edit entities within this company.
+					</div>
+					<div class = "button_column">
+						<button ng-repeat = "type in dm.get_types()" ng-click = "current_type(type)">{{type | capitalize}}</button>
+					</div>
+				</div>
+
+			</div>
+
+			<div class = "main_container">
+				<button ng-if = "current_type()" ng-click = "ctrl_new_blank_entity(current_type())">New {{current_type()}}</button>
+				<button ng-if = "current_entity().type === current_type()" ng-click = "ctrl_delete_entity(current_entity())">Delete {{current_type()}}</button>
+				<!-- list of divs for editing entities switched by ng-show on the active entity type -->
+				<!-- don't use ng-if or ng-switch here, we need even invisible entity editors to render -->
+				<!-- actually maybe you can use ng-switch here, not sure, but def don't use ng-if or bound lists wont work -->
+
+				<!-- Person -->
+				<div ng-show = "current_type() === 'person'">
+					<div class = "type_container" mud-ent = "ent" mud-ent-type = "person" ng-repeat = "ent in dm.ents_by_type['person'] | filter:{id: current_entity().id}">
+						<h3>Person</h3>
+						<div class = "main_panel">
+							<mud-prop mud-prop-name = "name" mud-prop-type = "val">
+								Name: <input mud-bind></input>
+							</mud-prop>
+
+							<mud-prop mud-prop-name = "age" mud-prop-type = "val">
+								Age: <input type = "number" mud-bind>
+							</mud-prop>
+
+							<mud-prop mud-prop-name = "dept" mud-prop-type = "ref">
+								Dept: <select 	mud-bind
+												ng-options = "dept.id as dept.get_child('name').val() for dept in dm.ents_by_type['department'] track by dept.id">
+										</select>
+							</mud-prop>
+						
+							<!-- filepicker -->
+							<mud-prop-cont mud-prop-cont-name = "a_file">
+								<label><input style = "visibility: hidden; overflow: hidden; position: absolute;" type = "file" asset-filepicker>{{mud.filename_prop.val() ? "File: " + mud.filename_prop.val() : "Choose file..."}}</label>
+							</mud-prop-cont>
+						</div>
+						
+						<!-- a list-prop with variable length -->
+						<h4>Quirks</h4>
+						<div class = "main_panel">
+							<div class = "select_list_prop" mud-list-prop mud-list-prop-name = "quirk_list">
+								<button ng-click = "mud.list_prop.increment()">Add a quirk</button>
+								<div ng-repeat = "obj in mud.list_prop.enum_list() | orderBy: 'edit_sort'">
+									<mud-prop-cont mud-prop-cont-name = "a_quirk" mud-list-prop-obj = "obj">
+										<mud-prop mud-prop-name = "quirk_chosen" mud-prop-type = "ref">
+											<select mud-bind
+													ng-options = "quirk.id as quirk.get_child('name').val() for quirk in dm.ents_by_type['quirk'] track by quirk.id">
+											</select>
+										</mud-prop>
+										<button ng-click = "mud.prop_cont.remove_self()">X</button>
+										<button ng-click = "dm.ent_up(mud.prop_cont, mud.parent_obj.children())">up</button>
+										<button ng-click = "dm.ent_down(mud.prop_cont, mud.parent_obj.children())">down</button>
+									</mud-prop-cont>
+								</div>
+							</div>
+						</div>
+						
+						<!-- a bound list-prop. is bound to a particular entity type. length will always be the number of entities of the bound type,-->
+						<!-- and each prop-cont will be bound to its corresponding entity in edit_sort sequence -->
+						<h4>Features</h4>
+						<div class = "main_panel">
+							<div class = "feature_table" mud-list-prop mud-list-prop-name = "feature_bound_list" mud-bound-list = "dm.ents_by_type['feature']" mud-bound-list-type = "feature">
+								<!-- can I get rid of some of these attrs? -->
+								<div class = "feature_row" mud-prop-cont mud-prop-cont-name = "feature_container" mud-list-prop-obj = "obj" ng-repeat = "obj in mud.list_prop.enum_list() | orderBy:'edit_sort'">
+									<div class = "feature_cell" mud-prop mud-prop-name = "bound_feature" mud-prop-type = "ref" mud-bound-prop>
+										{{mud.prop.val().get_child('name').val()}}
+									</div>
+									<div class = "feature_cell" mud-prop mud-prop-name = "bound_feature_value" mud-prop-type = "val">
+										<input mud-bind type = "number"></input>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- end person -->
+
+
+				<!-- Feature -->
+				<div ng-show = "current_type() === 'feature'">
+					<div class = "type_container" mud-ent = "ent" mud-ent-type = "feature" ng-repeat = "ent in dm.ents_by_type['feature'] | filter:{id: current_entity().id}">
+						<h3>Feature</h3>
+
+						<mud-prop mud-prop-name = "name" mud-prop-type = "val">
+							Name: <input mud-bind></input>
+						</mud-prop>
+
+					</div>
+				</div>
+				<!-- end feature -->
+				
+				<!-- Quirks -->
+				<div ng-show = "current_type() === 'quirk'">
+					<div class = "type_container" mud-ent = "ent" mud-ent-type = "quirk" ng-repeat = "ent in dm.ents_by_type['quirk'] | filter:{id: current_entity().id}">
+						<h3>Quirk</h3>
+						
+						<mud-prop mud-prop-name = "name" mud-prop-type = "val">
+							Name: <input mud-bind></input>
+						</mud-prop>
+					</div>
+				</div>
+				
+				<!-- Department -->
+				<div ng-show = "current_type() === 'department'">
+					<div class = "type_container" mud-ent = "ent" mud-ent-type = "department" ng-repeat = "ent in dm.ents_by_type['department'] | filter:{id: current_entity().id}">
+						<h3>Department</h3>
+						
+						<mud-prop mud-prop-name = "name" mud-prop-type = "val">
+							Dept. Name: <input mud-bind></input>
+						</mud-prop>
+					</div>
+				</div>
+
+				<!-- picker -->
+				<div class = "picker_container" ng-show = "dm.ents_by_type[current_type()].length > 0">
+					<h3>Choose which {{current_type()}} to edit:</h3>
+					<ul class = "ent_picker">
+						<li class = "ent_picker_item" ng-repeat = "ent in dm.ents_by_type[current_type()] | orderBy:'edit_sort'" ng-click = "current_entity(ent)">
+							<div ng-class = "{'selected': current_entity().id == ent.id}">
+								{{ent.get_child('name').val()}}
+							</div>
+						</li>
+					</ul>
+				</div>
+
+			</div>
+			<!-- end main container -->
+		</div>
+		
+	</div>
+	<!-- end wrapper -->
+
+</div>
+</body>
+</html>
