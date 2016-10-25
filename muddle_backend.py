@@ -9,10 +9,6 @@ from operator import itemgetter
 # allow for big posts
 BaseRequest.MEMFILE_MAX = 1024 * 1024
 
-@route("/hello")
-def hello():
-	return "Hello World!"
-
 # serve up our static files
 # example: http://localhost:8080/static/html/page.html
 @route("/static/<path:path>")
@@ -155,13 +151,11 @@ def export_master():
 	
 	# delete exports directory if it already exists
 	if os.path.exists(export_path):
-		os.rename(export_path,"exports/to_del")
-		shutil.rmtree("exports/to_del")
+		shutil.rmtree(export_path)
 		
 	# same deal with the export zip
 	if os.path.exists(export_path + ".zip") and os.path.isfile(export_path + ".zip"):
-		os.rename(export_path + ".zip", "exports/to_del.zip")
-		os.unlink("exports/to_del.zip")
+		os.unlink(export_path + ".zip")
 	
 	# create empty export dir
 	os.makedirs(export_path)
@@ -333,7 +327,10 @@ class Writer:
 			bound_id = x["bound_id"]
 			
 			# handle the master_id
-			write_master_id = master_id
+			if (master_level == False):
+				write_master_id = master_id
+			else:
+				write_master_id = None
 			
 			# properties not everything will have
 			num_val = None
@@ -380,4 +377,5 @@ class Writer:
 fetcher = Fetcher()
 writer = Writer()
 
+# obviously modify this for whatever environment
 run(host = "localhost", prot = 8080, debug = True)

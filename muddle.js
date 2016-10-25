@@ -469,11 +469,12 @@ angular.module("muddle").service("data_muddle", [function() {
 		
 		// hunts up the parent chain and returns top-level ancestor ent
 		this.true_parent = function() {
-			if (init_obj.parent.top_level) {
-				return init_obj.parent;
+			console.log("true_parent called");
+			if (obj.parent.top_level) {
+				return obj.parent;
 			}
 			else {
-				var par = init_obj.parent;
+				var par = obj.parent;
 				while (par.top_level == false) {
 					par = par.immed_parent();
 				}
@@ -482,12 +483,12 @@ angular.module("muddle").service("data_muddle", [function() {
 		}
 		
 		this.immed_parent = function() {
-			return init_obj.parent;
+			return obj.parent;
 		}
 		
 		this.base_name = function() {
-			if (angular.isDefined(init_obj.base_name)) {
-				return init_obj.base_name;
+			if (angular.isDefined(obj.base_name)) {
+				return obj.base_name;
 			}
 			return null;
 		};
@@ -932,9 +933,17 @@ angular.module("muddle").service("data_muddle", [function() {
 				// I could instead have the server look for master-level items to be saved, pull them out and save
 				// them first...
 				// not sure I need this anymore, now saving master ents with the others
-				if (! this.ents[i].master_level) {
+				//if (! this.ents[i].master_level) {
 					q.push(this.ents[i]);
-				}
+				//}
+			}
+		}
+		
+		// now look for new master-levels
+		
+		for (i = 0; i < this.masters.length; i++) {
+			if (this.masters[i].modified) {
+				q.push(this.masters[i]);
 			}
 		}
 		
@@ -1188,7 +1197,7 @@ angular.module("muddle").directive("mudBind", ["data_muddle", "$compile", functi
 				$compile(elem)(scope);
 			}
 		};
-	};
+	}
 	
 	return {
 		compile: compile
@@ -1197,6 +1206,27 @@ angular.module("muddle").directive("mudBind", ["data_muddle", "$compile", functi
 		, restrict: "A"
 	};
 	
+}]);
+
+angular.module("muddle").directive("mudListPropRepeat", ["data_muddle", "$compile", function(data_muddle, $compile) {
+	function compile(element, attrs) {
+		element.attr("ng-repeat", "__obj in mud.list_prop.enum_list() | orderBy: 'edit_sort'");
+		element.removeAttr("mud-list-prop-repeat");
+		return {
+			pre: function pre(scope, elem, attrs, ctrl) {}
+			, post: function post(scope, elem, attrs, ctrl) {
+				$compile(elem)(scope);
+			}
+		};
+	}
+	
+	return {
+		compile: compile
+		, priority: 10000
+		, terminal: true
+		, restrict: "A"
+	};
+
 }]);
 
 // simplest data field -- simply a value or a reference to another ent
@@ -1221,7 +1251,7 @@ angular.module("muddle").directive("mudProp", ["data_muddle", function(data_mudd
 			$scope.mud = {};
 			// should I add a bunch of $scope.hasOwnProperty("blah") ? $scope.blah : null/false
 			$scope.mud.parent_obj = temp.current_mud || null; // this really shouldn't ever be null...
-			$scope.mud.prop_name = $attrs.mudPropName;
+			$scope.mud.prop_name = $attrs.mudName;
 			$scope.mud.prop_type = $attrs.mudPropType;
 			$scope.mud.edit_only = $attrs.hasOwnProperty("mudEditOnly");
 			$scope.mud.is_file = $attrs.hasOwnProperty("mudIsFile"); // am I using this?
@@ -1292,8 +1322,8 @@ angular.module("muddle").directive("mudPropCont", ["data_muddle", function(data_
 		if (! $scope.hasOwnProperty("mud")) {
 			$scope.mud = {};
 			$scope.mud.parent_obj = temp.current_mud || null; // this really shouldn't ever be null...
-			$scope.mud.prop_cont_name = $attrs.mudPropContName;
-			$scope.mud.list_prop_obj = $scope.$eval($attrs.mudListPropObj) || null;
+			$scope.mud.prop_cont_name = $attrs.mudName;
+			$scope.mud.list_prop_obj = $scope.$eval("__obj") || $scope.$eval($attrs.mudListPropObj) || null;
 			
 			// if this is an item in a list_prop...
 			if ($scope.mud.list_prop_obj) {
@@ -1374,7 +1404,7 @@ angular.module("muddle").directive("mudListProp", ["data_muddle", function(data_
 		if (! $scope.hasOwnProperty("mud")) {
 			$scope.mud = {};
 			$scope.mud.parent_obj = temp.current_mud || null ; // this really shouldn't ever be null...
-			$scope.mud.list_prop_name = $attrs.mudListPropName;
+			$scope.mud.list_prop_name = $attrs.mudName;
 			$scope.mud.bound_list_type = $attrs.mudBoundListType || null;
 			$scope.mud.is_bound_list = $attrs.hasOwnProperty("mudBoundListType");
 			if ($scope.mud.is_bound_list) {
@@ -1493,22 +1523,6 @@ angular.module("muddle").service("muddle_backend", ["data_muddle", "$http", "$wi
 	// a master-level ent. If they save an ent assigned to a master-level, and don't save the master-level ent,
 	// the ent will be orphaned in the db.
 	
-	// not gonna use this
-	/*
-	this.save_master = function(master) {
-		var save_obj = {master: master};
-		
-		$http.post("/save_master/", save_obj).then(
-			// success
-			function(payload) {
-				console.log("muddle_backend.save_master returned success");
-			},
-			// failure
-			function(payload) {
-				console.log("muddle_backend.save_master returned failure");
-			});
-	};
-	*/
 	
 	// load all entities for a given master
 	// pass a master ent if using masters... Otherwise it will load all ents under the default null master id
@@ -1554,46 +1568,7 @@ angular.module("muddle").service("muddle_backend", ["data_muddle", "$http", "$wi
 		);
 	};
 	
-	// not sure this even needs to be separate from this.save below
-	this.save_master = function(param) {
-		var save_list, form, i;
-		
-		// make sure we're dealing with an array
-		// would it be better for the first test to be (param.type && param.type === "ent") ?
-		// I think it's a good idea to save just one master at a time, but we're using the regular /save_entities/
-		// $http route so it'll expect an array
-		if (param.constructor != Array) {
-			save_list = [param];
-		}
-		else {
-			save_list = param;
-		}
-		
-		// make a form object for our data... again because /save_entities/ expects it
-		// not going to handle files... don't put files in a master entity
-		form = new FormData;
-		form.append("save_list", JSON.stringify(save_list));
-		form.append("master", JSON.stringify(false));
-		
-		// actually save 
-		return $http.post("/save_entities/", form, {transformRequest: angular.identity, headers: {"Content-Type": undefined}}).then(
-			// success
-			function(payload) {
-				for (i = 0; i < save_list.length; i++) {
-					save_list[i].modified = false;
-				}
-				return save_list;
-			},
-			// fail
-			function(payload) {
-				console.log("save_master failed");
-				console.log(payload);
-				return payload;
-			}
-		);
-	};
-	
-	// save regular entities
+	// save entities
 	this.save = function(param, current_master) {
 		var save_list, i, files, form, master;
 		
@@ -1681,7 +1656,7 @@ angular.module("muddle").service("muddle_backend", ["data_muddle", "$http", "$wi
 			params.master_id = master.id;
 		}
 		
-		// ought to be a better way to do this
+		// surely there's a better way to do this
 		var a = angular.element("<a/>");
 		a.attr({ 	href: "/export_master/?master_id=" + params.master_id
 					, type: "application/force-download"
