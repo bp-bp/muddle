@@ -70,13 +70,14 @@ app.controller("main_control", ["$scope", "data_muddle", "muddle_backend", funct
 	};
 	
 	$scope.ctrl_new_blank_master = function() {
-		var go;
+		var go = true;
 		if ($scope.dm.modified_ents().length > 0) {
 			go = confirm("There are unsaved changes in the current company, if you load a new company these changes will be lost.\n\nLoad anyway?");
 		}
 		
 		if (go) {
 			var master = $scope.dm.new_blank_master();
+			$scope.dm.init_keep_masters();
 			$scope.current_master(master);
 			return master;
 		}
