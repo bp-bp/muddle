@@ -92,6 +92,10 @@ h5 {
 	margin: 0 1em;
 }
 
+.editor_box {
+	min-height: 16em;
+}
+
 .type_container {
 	margin-top: 1.75em;
 }

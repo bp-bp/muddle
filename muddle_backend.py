@@ -9,10 +9,6 @@ from operator import itemgetter
 # allow for big posts
 BaseRequest.MEMFILE_MAX = 1024 * 1024
 
-@route("/hello")
-def hello():
-	return "Hello World!"
-
 # serve up our static files
 # example: http://localhost:8080/static/html/page.html
 @route("/static/<path:path>")
@@ -131,7 +127,52 @@ def load_all_masters():
 	masters = fetcher.get_all_masters()
 	return json.dumps(masters)
 
-
+# note this is a route and not a post/get...
+@route("/export_master/")
+def export_master():
+	
+	if "master_id" in request.query.keys():
+		master_id = request.query["master_id"]
+		if master_id == "null":
+			master_id = None
+	else:
+		master_id = None
+	
+	the_data = fetcher.get_ents(master_id)
+	
+	# path stuff
+	name = None
+	if not master_id:
+		name = "default"
+	else:
+		name = master_id
+	
+	export_path = "exports/" + name
+	
+	# delete exports directory if it already exists
+	if os.path.exists(export_path):
+		shutil.rmtree(export_path)
+		
+	# same deal with the export zip
+	if os.path.exists(export_path + ".zip") and os.path.isfile(export_path + ".zip"):
+		os.unlink(export_path + ".zip")
+	
+	# create empty export dir
+	os.makedirs(export_path)
+	
+	# write out the json
+	export_file = open(export_path + "/data.json", "w")
+	export_file.write(json.dumps(the_data))
+	export_file.close()
+	
+	# grab our assets
+	# put something here
+	
+	# zip it all up
+	shutil.make_archive(export_path, "zip", export_path)
+	
+	return static_file(export_path + ".zip", root = "", download = export_path + ".zip")
+	
 
 class Fetcher:
 	def __init__(self):
@@ -286,7 +327,10 @@ class Writer:
 			bound_id = x["bound_id"]
 			
 			# handle the master_id
-			write_master_id = master_id
+			if (master_level == False):
+				write_master_id = master_id
+			else:
+				write_master_id = None
 			
 			# properties not everything will have
 			num_val = None
@@ -333,4 +377,5 @@ class Writer:
 fetcher = Fetcher()
 writer = Writer()
 
+# obviously modify this for whatever environment
 run(host = "localhost", prot = 8080, debug = True)
