@@ -378,4 +378,4 @@ fetcher = Fetcher()
 writer = Writer()
 
 # obviously modify this for whatever environment
-run(host = "localhost", prot = 8080, debug = True)
+run(host = "localhost", port = 8080, debug = True)
