@@ -177,6 +177,10 @@ def export_master():
 class Fetcher:
 	def __init__(self):
 		self.db = sqlite3.connect("db/entities.s3db")
+		if self.db:
+			print("got db")
+		else: 
+			print("did not get db")
 		# returns utf-8 instead of unicode
 		self.db.text_factory = str
 		self.db.row_factory = sqlite3.Row
@@ -377,5 +381,5 @@ class Writer:
 fetcher = Fetcher()
 writer = Writer()
 
-# obviously modify this for whatever environment
-run(host = "localhost", prot = 8080, debug = True)
+# currently set up to test
+run(host = "0.0.0.0", port = 8081, debug = True)
