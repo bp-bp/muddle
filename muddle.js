@@ -1027,7 +1027,7 @@ angular.module("muddle").service("data_muddle", [function() {
 		return q;
 	};
 	
-	// removes passed-in ent from data service
+	// removes passed-in ent from data service, not from backend
 	this.delete_ent = function(obj) {
 		var i, type = obj.type;
 		// remove from main ents list
@@ -1512,6 +1512,7 @@ angular.module("muddle").directive("assetFilepicker", function() {
 // simple for interacting with backend
 angular.module("muddle").service("muddle_backend", ["data_muddle", "$http", "$window", function(data_muddle, $http, $window) {
 	this.data_muddle = data_muddle;
+	var srv = this;
 	
 	// save master-level entity
 	// master-level entities are whole sets of data across which data is not shared... If this is an app for
@@ -1621,7 +1622,7 @@ angular.module("muddle").service("muddle_backend", ["data_muddle", "$http", "$wi
 			});
 	};
 	
-	// delete entities
+	// delete entities from backend, not data service
 	this.delete = function(param) {
 		var del_list, i, master;
 		
@@ -1637,6 +1638,12 @@ angular.module("muddle").service("muddle_backend", ["data_muddle", "$http", "$wi
 		return $http.post("/delete_entities/", del_list).then( 
 			// success
 			function(payload) {
+				// delete from front-end on success
+				// first part not yet tested
+				var i;
+				for (i = 0; i < del_list.length; i++) {
+					srv.data_muddle.delete_ent(del_list[i]);
+				}
 				return del_list;
 			},
 			// failure
@@ -1648,14 +1655,13 @@ angular.module("muddle").service("muddle_backend", ["data_muddle", "$http", "$wi
 		);
 	};
 	
-	// export this company's data as a zip containing a json file and, eventually, any uploaded files
+	// export this company's data as a zip containing a json file and, eventually (but not yet), any uploaded files
 	// to do: implement the uploaded files part
 	this.export_master = function(master) {
 		var params = {master_id: false};
 		if (angular.isDefined(master)) {
 			params.master_id = master.id;
 		}
-		
 		// surely there's a better way to do this
 		var a = angular.element("<a/>");
 		a.attr({ 	href: "/export_master/?master_id=" + params.master_id
