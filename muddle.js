@@ -13,7 +13,7 @@ angular.module("muddle").service("data_muddle", [function() {
 	var ents = this.ents;
 	
 	// some utilities
-	// creates unique id... yes, on the front-end. jazz this up with a username or a timestamp if you don't trust it. 
+	// creates unique id... on the front-end, for now. 
 	this.gen_id = function () {
 		function chunk() {
 			var id = Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
